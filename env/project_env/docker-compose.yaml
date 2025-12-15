@@ -1,0 +1,105 @@
+version: "3"
+
+services:
+  mysql:
+    container_name: mysqld
+    image: mysql:${MYSQL_VERSION}
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_PASSWORD}
+      TZ: Asia/Shanghai
+    command:
+      - --server_id=1
+      - --binlog_format=MIXED
+      - --slow_query_log=1
+      - --slow_query_log_file=/var/log/mysql/mysql-slow.log
+      - --long_query_time=3
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_general_ci
+      - --innodb_buffer_pool_size=8G
+      - --innodb_buffer_pool_instances=8
+      - --innodb_buffer_pool_chunk_size=1G
+    ports:
+      - ${MYSQL_PORT}:${MYSQL_CONTAINER_PORT}
+    volumes:
+      - /mnt/data/mysql:/var/lib/mysql
+      - /mnt/logs/mysql:/var/log/mysql
+
+  nginx:
+    image: nginx:latest
+    container_name: my-nginx
+    ports:
+      - ${NGINX_PORT_1}:${NGINX_CONTAINER_PORT_1}
+      - ${NGINX_PORT_2}:${NGINX_CONTAINER_PORT_2}
+    volumes:
+      - ./nginx/conf:/etc/nginx/conf.d
+      - ./nginx/html:/usr/share/nginx/html
+    restart: always
+
+  redis:
+    container_name: redisd
+    image: redis:5.0.7
+    restart: always
+    command: redis-server --requirepass ${REDIS_PASSWORD}
+    ports:
+      - ${REDIS_PORT}:${REDIS_CONTAINER_PORT}
+
+  jaeger:
+    image: jaegertracing/all-in-one:1.55
+    container_name: jaeger
+    environment:
+      COLLECTOR_ZIPKIN_HOST_PORT: ":9411"
+    ports:
+      - ${JAEGER_PORT_1}:${JAEGER_CONTAINER_PORT_1}/udp
+      - ${JAEGER_PORT_2}:${JAEGER_CONTAINER_PORT_2}/udp
+      - ${JAEGER_PORT_3}:${JAEGER_CONTAINER_PORT_3}
+      - ${JAEGER_PORT_4}:${JAEGER_CONTAINER_PORT_4}
+      - ${JAEGER_PORT_5}:${JAEGER_CONTAINER_PORT_5}
+      - ${JAEGER_PORT_6}:${JAEGER_CONTAINER_PORT_6}
+      - ${JAEGER_PORT_7}:${JAEGER_CONTAINER_PORT_7}
+      - ${JAEGER_PORT_8}:${JAEGER_CONTAINER_PORT_8}
+      - ${JAEGER_PORT_9}:${JAEGER_CONTAINER_PORT_9}
+      - ${JAEGER_PORT_10}:${JAEGER_CONTAINER_PORT_10}
+
+  nsqlookupd:
+    image: nsqio/nsq
+    command: /nsqlookupd --config=/etc/nsqlookupd/nsqlookupd.conf
+    networks:
+      - nsq-network
+    hostname: nsqlookupd
+    ports:
+      - ${NSQLOOKUPD_PORT_1}:${NSQLOOKUPD_CONTAINER_PORT_1}
+      - ${NSQLOOKUPD_PORT_2}:${NSQLOOKUPD_CONTAINER_PORT_2}
+    volumes:
+      - ./nsqlookupd.conf:/etc/nsqlookupd/nsqlookupd.conf
+      - ./logs/lookupd_log:/logs/lookupd_log
+
+  nsqd:
+    image: nsqio/nsq
+    command: /nsqd --lookupd-tcp-address=nsqlookupd:4160 -data-path=/nsq-data -mem-queue-size=1000000 -max-msg-timeout=24h -config=/etc/nsqd/nsqd.conf
+    depends_on:
+      - nsqlookupd
+    networks:
+      - nsq-network
+    ports:
+      - ${NSQD_PORT_1}:${NSQD_CONTAINER_PORT_1}
+      - ${NSQD_PORT_2}:${NSQD_CONTAINER_PORT_2}
+    volumes:
+      - ./nsqd.conf:/etc/nsqd/nsqd.conf
+      - ./data:/nsq-data
+      - ./logs/nsqd_log:/logs/nsqd
+
+  nsqadmin:
+    image: nsqio/nsq
+    command: /nsqadmin --lookupd-http-address=nsqlookupd:4161
+    depends_on:
+      - nsqlookupd
+    hostname: nsqadmin
+    ports:
+      - ${NSQADMIN_PORT}:${NSQADMIN_CONTAINER_PORT}
+    networks:
+      - nsq-network
+
+networks:
+  nsq-network:
+    driver: bridge

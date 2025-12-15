@@ -1,0 +1,17 @@
+version: "3"
+
+services:
+  nginx:
+    image: nginx:latest
+    container_name: my-nginx
+    ports:
+      - ${NGINX_PORT_1}:${NGINX_CONTAINER_PORT_1}
+      - ${NGINX_PORT_2}:${NGINX_CONTAINER_PORT_2}
+    volumes:
+      - ./nginx/conf:/etc/nginx/conf.d
+      - ./nginx/html:/usr/share/nginx/html
+    restart: always
+
+networks:
+  nsq-network:
+    driver: bridge

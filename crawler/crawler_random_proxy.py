@@ -2,7 +2,7 @@
 https://proxylist.geonode.com/api/proxy-list?limit=500&page=1&sort_by=lastChecked&sort_type=desc
 limit max 500, can't gt 500
 page min 1, can't lt 1
-随机返回一个 HTTP 代理
+随机返回一个代理, 支持 HTTP, HTTPS, SOCKS4, SOCKS5
 """
 from random import choice
 
