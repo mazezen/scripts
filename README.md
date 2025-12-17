@@ -23,5 +23,6 @@
     - _daemon_start.sh_: 自动管理容器启动
     - _daemon_stop.sh_: 自动管理容器停止
     - _searchelf.sh_: 搜索大于 10MiB 的 ELF 文件
+    * _retrieve_slow_programs \_through \_logs.sh_: 通过日志检索慢程序 (支持大日志文件检索)
   - <a href="https://github.com/mazezen/awesome-scripts/tree/master/system/mac">Mac</a>
     - _switch_mac_mode.py_: 切换苹果电脑的模式
